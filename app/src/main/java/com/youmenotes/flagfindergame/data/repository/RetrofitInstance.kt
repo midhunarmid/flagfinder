@@ -22,6 +22,7 @@ object RetrofitInstance {
     suspend fun fetchQuestions() : Result<List<Question>> {
         return try {
             val response = api.getQuestions()
+            println(response.body())
 
             if (response.isSuccessful) {
                 Result.success(response.body()?.record?.questions ?: emptyList())

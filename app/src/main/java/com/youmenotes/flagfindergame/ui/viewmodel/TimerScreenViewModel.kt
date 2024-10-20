@@ -29,4 +29,9 @@ class TimerScreenViewModel : ViewModel() {
             _isChallengeStarted.value = true
         }
     }
+
+    fun resetTimer() {
+        _isChallengeStarted.value = false
+        _remainingTime.value = 20
+    }
 }

@@ -46,6 +46,9 @@ fun AppNavHost(
                 onQuizComplete = {
                     // Navigate to result screen when quiz ends
                     navController.navigate(Screen.Result.route)
+                },
+                onGoBack = {
+                    navController.popBackStack()
                 }
             )
         }

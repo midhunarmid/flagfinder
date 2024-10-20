@@ -1,10 +1,19 @@
 package com.youmenotes.flagfindergame.ui.screens
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -16,7 +25,8 @@ import com.youmenotes.flagfindergame.ui.viewmodel.QuizScreenViewModel
 fun QuizScreen(
     quizViewModel: QuizScreenViewModel,
     onQuizComplete: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onGoBack: () -> Unit,
 ) {
     val currentQuestion by quizViewModel.currentQuestion.collectAsState()
     val totalQuestions = quizViewModel.totalQuestions.collectAsState()
@@ -31,7 +41,19 @@ fun QuizScreen(
             CircularProgressIndicator()
         } else if (errorMessage.value.isNotEmpty()) {
             // Show error message to the user
-            Text(text = "Error: ${errorMessage.value}", color = Color.Red)
+            Column(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(text = "Error: ${errorMessage.value}", color = Color.Red)
+
+                Button(onClick = onGoBack) {
+                    Text(text = "Go Back")
+                }
+            }
         } else {
             Column(
                 modifier = modifier

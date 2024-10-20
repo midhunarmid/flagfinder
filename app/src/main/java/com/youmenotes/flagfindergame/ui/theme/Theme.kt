@@ -8,22 +8,22 @@ private val DarkColorScheme = darkColorScheme(
     primary = Purple200,
     secondary = Teal200,
     background = DarkGray,
-    surface = LightGray,
+    surface = ThemePrimaryColor,
     onPrimary = White,
     onSecondary = White,
     onBackground = White,
-    onSurface = Black
+    onSurface = White
 )
 
 private val LightColorScheme = lightColorScheme(
     primary = Purple500,
     secondary = Teal200,
     background = White,
-    surface = LightGray,
+    surface = ThemePrimaryColor,
     onPrimary = White,
     onSecondary = Black,
     onBackground = Black,
-    onSurface = Black
+    onSurface = White
 )
 
 @Composable

@@ -43,6 +43,10 @@ class QuizScreenViewModel :ViewModel() {
                 true -> {
                     _quizData.addAll(result.getOrDefault(emptyList()))
                     _totalQuestions.value = _quizData.size
+                    if (_quizData.size == 0) {
+                        _errorMessage.value = "No questions found"
+                        return@launch
+                    }
                     _currentQuestion.value = _quizData[0]
                 }
                 false -> {

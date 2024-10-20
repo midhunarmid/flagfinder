@@ -33,6 +33,7 @@ fun TimerScreen(
         if (isChallengeStarted) {
             println("Starting Quiz")
             onStartQuiz()  // Call onStartQuiz only once when challenge starts
+            viewModel.resetTimer()
         }
     }
 

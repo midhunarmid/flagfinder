@@ -40,7 +40,7 @@ fun QuizApp(navController: NavHostController, quizViewModel: QuizScreenViewModel
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "Flags Challenge") }
+                title = { Text(text = "Flags Challenge") },
             )
         },
         content = { innerPadding ->
