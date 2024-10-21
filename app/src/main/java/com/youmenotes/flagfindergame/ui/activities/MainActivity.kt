@@ -15,7 +15,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.youmenotes.flagfindergame.ui.navigation.AppNavHost
 import com.youmenotes.flagfindergame.ui.theme.FlagFinderGameTheme
-import com.youmenotes.flagfindergame.ui.viewmodel.QuizScreenViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 

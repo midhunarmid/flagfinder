@@ -30,7 +30,6 @@ class QuizScreenViewModel @Inject constructor(
 
     // StateFlow to hold the total questions
     private val _totalQuestions = MutableStateFlow(0)
-    val totalQuestions = _totalQuestions.asStateFlow()
 
     private val _currentQuestion = MutableStateFlow<Question?>(null)
     val currentQuestion = _currentQuestion.asStateFlow()
@@ -48,7 +47,6 @@ class QuizScreenViewModel @Inject constructor(
     val isLoading = _isLoading.asStateFlow()
 
     private val _correctAnswerId = MutableStateFlow<Int?>(null)
-    val correctAnswerId = _correctAnswerId.asStateFlow()
 
     private val _selectedAnswerId = MutableStateFlow<Int?>(null)
     val selectedAnswerId = _selectedAnswerId.asStateFlow()

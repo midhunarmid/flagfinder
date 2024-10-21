@@ -33,7 +33,6 @@ import com.youmenotes.flagfindergame.ui.viewmodel.TimerScreenViewModel
 @Composable
 fun TimerScreen(
     onStartQuiz: (startedBefore: Int) -> Unit,
-    resetFlag: Boolean = false,
     viewModel: TimerScreenViewModel = viewModel()
 ) {
     // Observe the remaining time and challenge start state

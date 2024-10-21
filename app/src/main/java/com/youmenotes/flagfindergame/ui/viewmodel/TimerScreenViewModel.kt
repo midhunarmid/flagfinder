@@ -59,11 +59,6 @@ class TimerScreenViewModel @Inject constructor(
         loadScheduledTime()
     }
 
-    fun resetScheduledTime() {
-        setTime(-1, -1, -1)
-        saveScheduledTime()
-    }
-
     // Load scheduled time from SharedPreferences
     fun loadScheduledTime() {
         hour = sharedPreferences.getInt("scheduled_hour", -1)

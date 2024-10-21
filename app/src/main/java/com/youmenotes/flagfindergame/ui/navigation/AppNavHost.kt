@@ -8,13 +8,10 @@ import androidx.navigation.compose.composable
 import com.youmenotes.flagfindergame.ui.screens.QuizScreen
 import com.youmenotes.flagfindergame.ui.screens.ResultScreen
 import com.youmenotes.flagfindergame.ui.screens.TimerScreen
-import com.youmenotes.flagfindergame.ui.viewmodel.QuizScreenViewModel
 
 // Define your routes for navigation
 sealed class Screen(val route: String) {
-    object Timer : Screen("timer_screen/{resetFlag}") {
-        fun createRoute(resetFlag: Boolean) = "timer_screen/$resetFlag"
-    }
+    object Timer : Screen("timer_screen")
     object Quiz : Screen("quiz_screen/{countdownTime}") {
         fun createRoute(countdownTime: Int) = "quiz_screen/$countdownTime"
     }
@@ -34,12 +31,8 @@ fun AppNavHost(
         modifier = modifier
     ) {
         // Timer screen composable
-        composable(Screen.Timer.route) { navBackStackEntry ->
-            val resetFlag =
-                navBackStackEntry.arguments?.getString("resetFlag")?.toBoolean() ?: false
-
+        composable(Screen.Timer.route) {
             TimerScreen(
-                resetFlag = resetFlag,
                 onStartQuiz = { startedBefore ->
                     // Navigate to quiz screen with countdown time as an argument
                     navController.navigate(Screen.Quiz.createRoute(startedBefore))
@@ -69,7 +62,7 @@ fun AppNavHost(
             ResultScreen(
                 onRestart = {
                     // Navigate back to the timer screen to restart the game
-                    navController.navigate(Screen.Timer.createRoute(true)) {
+                    navController.navigate(Screen.Timer) {
                         popUpTo(Screen.Timer.route) {
                             inclusive = true
                         }
