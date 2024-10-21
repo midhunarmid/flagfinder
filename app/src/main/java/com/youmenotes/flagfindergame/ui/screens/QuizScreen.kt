@@ -1,5 +1,6 @@
 package com.youmenotes.flagfindergame.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -26,14 +28,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.youmenotes.flagfindergame.R
 import com.youmenotes.flagfindergame.ui.viewmodel.QuizScreenViewModel
+import com.youmenotes.flagfindergame.ui.widgets.MyButton
 
 @Composable
 fun QuizScreen(
@@ -51,6 +59,8 @@ fun QuizScreen(
     val remainingTime by viewModel.remainingTime.collectAsState()
     val coolDownTime by viewModel.coolDownTime.collectAsState()
     val isQuizFinished by viewModel.isQuizFinished.collectAsState()
+    var showExitDialog by remember { mutableStateOf(false) }
+
 
     LaunchedEffect(Unit) {
         viewModel.updateQuestion(startedBefore)
@@ -60,6 +70,19 @@ fun QuizScreen(
         if (isQuizFinished) {
             onQuizComplete()
         }
+    }
+
+    BackHandler {
+        // Show confirmation dialog when back is pressed
+        showExitDialog = true
+    }
+
+    if (showExitDialog) {
+        ExitConfirmationDialog(onConfirm = {
+            showExitDialog = false
+        }, onDismiss = {
+            showExitDialog = false
+        })
     }
 
     // Show a loading indicator while fetching questions
@@ -76,9 +99,7 @@ fun QuizScreen(
         ) {
             Text(text = "Error: $errorMessage", color = Color.Red)
 
-            Button(onClick = onGoBack) {
-                Text(text = "Go Back")
-            }
+            MyButton(stringResource(R.string.go_back)) { onGoBack() }
         }
     } else {
         Column(
@@ -91,21 +112,20 @@ fun QuizScreen(
             QuestionHeader(currentQuestionIndex + 1)
 
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(16.dp)
+                verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(16.dp)
             ) {
                 if (remainingTime > 0) {
                     CountDownTimerDisplay(remainingTime)
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
-                        text = "Your clock is ticking...",
+                        text = stringResource(R.string.your_clock_is_ticking),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 } else {
                     CountDownTimerDisplay(coolDownTime, Color.LightGray)
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
-                        text = "You are in cool down time...",
+                        text = stringResource(R.string.you_are_in_cool_down_time),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
@@ -145,40 +165,36 @@ fun QuizScreen(
                     MaterialTheme.colorScheme.surface
                 }
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp, horizontal = 16.dp)
-                        .clickable {
-                            if (remainingTime != 0) {
-                                viewModel.registerAnswer(country.id)
-                            }
+                Row(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp, horizontal = 16.dp)
+                    .clickable {
+                        if (remainingTime != 0) {
+                            viewModel.registerAnswer(country.id)
                         }
-                        .background(
-                            bgColor,
-                            shape = RoundedCornerShape(8.dp)
-                        ) // Rounded background
-                        .padding(16.dp), // Padding inside the row
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                    }
+                    .background(
+                        bgColor, shape = RoundedCornerShape(8.dp)
+                    )
+                    .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
                     if (selectedAnswerId == country.id) {
                         Icon(
                             imageVector = Icons.Default.Check,
-                            contentDescription = "Flag",
+                            contentDescription = "Check",
                             modifier = Modifier.size(24.dp),
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(16.dp)) // Space between the icon and text
+                    Spacer(modifier = Modifier.width(16.dp))
 
                     // Display country name and feedback (correct/wrong)
                     Column(
-                        modifier = Modifier.weight(1f) // Ensures that the text takes the remaining width
+                        modifier = Modifier.weight(1f)
                     ) {
                         Text(
-                            text = country.countryName,
-                            style = MaterialTheme.typography.bodyLarge
+                            text = country.countryName, style = MaterialTheme.typography.bodyLarge
                         )
                         Spacer(modifier = Modifier.height(8.dp))
 
@@ -186,13 +202,13 @@ fun QuizScreen(
                         if (remainingTime == 0) {
                             if (country.id == currentQuestion?.answerId) {
                                 Text(
-                                    text = "Correct Answer",
+                                    text = stringResource(R.string.correct_answer),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = Color.White
                                 )
                             } else if (country.id == selectedAnswerId) {
                                 Text(
-                                    text = "Wrong Answer",
+                                    text = stringResource(R.string.wrong_answer),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = Color.Red
                                 )
@@ -202,43 +218,9 @@ fun QuizScreen(
                 }
             }
 
-            if (remainingTime != 0) {
-                Spacer(modifier = Modifier.height(32.dp))
-                Button(
-                    onClick = {
-                        viewModel.checkAnswer()
-
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.CenterHorizontally) // Align button at the bottom
-                        .padding(16.dp), // Padding to avoid screen edges
-                ) {
-                    Text(
-                        text = "Check Answer",
-                        modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)
-                    )
-                }
-            }
-
             Spacer(modifier = Modifier.height(32.dp))
 
-            Button(
-                onClick = {
-                    viewModel.finishQuiz()
-
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.CenterHorizontally) // Align button at the bottom
-                    .padding(16.dp), // Padding to avoid screen edges
-            ) {
-                Text(
-                    text = "Finish Quiz",
-                    modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)
-                )
-
-            }
+            MyButton(stringResource(R.string.finish_quiz)) { viewModel.finishQuiz() }
 
             Spacer(modifier = Modifier.height(32.dp))
         }
@@ -248,10 +230,8 @@ fun QuizScreen(
 @Composable
 fun QuestionHeader(questionNumber: Int) {
     Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(16.dp)
+        verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(16.dp)
     ) {
-        // Circle with question number
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
@@ -259,19 +239,17 @@ fun QuestionHeader(questionNumber: Int) {
                 .background(MaterialTheme.colorScheme.primary, shape = CircleShape)
         ) {
             Text(
-                text = questionNumber.toString(),
-                color = Color.White, // Set the text color
-                style = MaterialTheme.typography.headlineMedium // Adjust text style as needed
+                text = questionNumber.toString(), color = Color.White,
+                style = MaterialTheme.typography.headlineMedium
             )
         }
 
-        Spacer(modifier = Modifier.width(8.dp)) // Add space between the circle and text
+        Spacer(modifier = Modifier.width(8.dp))
 
-        // "Guess the Country by the Flag" text
         Text(
-            text = "Guess the Country by the Flag",
+            text = stringResource(R.string.guess_the_country_by_the_flag),
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onBackground // Use onBackground for contrast
+            color = MaterialTheme.colorScheme.onBackground
         )
     }
 }
@@ -284,11 +262,27 @@ fun CountDownTimerDisplay(remainingTime: Int, color: Color = Color.Black) {
 
     Box(
         modifier = Modifier
-            .size(80.dp, 40.dp) // Set the size of the box
+            .size(80.dp, 40.dp)
             .background(color)
-            .padding(8.dp), // Padding inside the box
-        contentAlignment = Alignment.Center // Center text inside the box
+            .padding(8.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Text(text = formattedTime, color = Color.White, fontSize = 20.sp) // White text
+        Text(text = formattedTime, color = Color.White, fontSize = 20.sp)
     }
+}
+
+@Composable
+fun ExitConfirmationDialog(
+    onConfirm: () -> Unit, onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = stringResource(R.string.complete_quiz)) },
+        text = { Text(text = stringResource(R.string.you_can_not_exit_the_challenge_halfway_the_timer_is_still_ticking)) },
+        confirmButton = {
+            Button(onClick = onConfirm) {
+                Text(text = stringResource(R.string.ok))
+            }
+        },
+    )
 }

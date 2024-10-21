@@ -28,7 +28,6 @@ class QuizScreenViewModel @Inject constructor(
 
     private val _quizData = mutableListOf<Question>()
 
-    // StateFlow to hold the total questions
     private val _totalQuestions = MutableStateFlow(0)
 
     private val _currentQuestion = MutableStateFlow<Question?>(null)
@@ -136,7 +135,6 @@ class QuizScreenViewModel @Inject constructor(
 
     fun checkAnswer() {
         _remainingTime.value = 0
-        _selectedAnswerId.value = sharedPreferences.getInt("$_currentQuestionIndex", -1)
         countdownJob?.cancel()
         cooldownJob?.cancel()
         cooldownJob = viewModelScope.launch {

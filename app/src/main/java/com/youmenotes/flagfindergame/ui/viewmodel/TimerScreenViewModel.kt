@@ -24,11 +24,9 @@ class TimerScreenViewModel @Inject constructor(
     private val sharedPreferences =
         application.getSharedPreferences("TimerPrefs", Context.MODE_PRIVATE)
 
-    // Timer state (in seconds)
-    private val _remainingTime = MutableStateFlow(20)
+    private val _remainingTime = MutableStateFlow(0)
     val remainingTime = _remainingTime.asStateFlow()
 
-    // State to indicate when the challenge should start
     private val _isChallengeStarted = MutableStateFlow(false)
     val isChallengeStarted = _isChallengeStarted.asStateFlow()
 
@@ -49,7 +47,6 @@ class TimerScreenViewModel @Inject constructor(
     }
 
 
-    // Logic to save the time
     fun saveScheduledTime() {
         sharedPreferences.edit()
             .putInt("scheduled_hour", hour)
@@ -59,7 +56,6 @@ class TimerScreenViewModel @Inject constructor(
         loadScheduledTime()
     }
 
-    // Load scheduled time from SharedPreferences
     fun loadScheduledTime() {
         hour = sharedPreferences.getInt("scheduled_hour", -1)
         minute = sharedPreferences.getInt("scheduled_minute", -1)
@@ -68,13 +64,19 @@ class TimerScreenViewModel @Inject constructor(
         startCountdown()
     }
 
-    // Function to start the countdown
     fun startCountdown() {
         // Cancel the previous countdown if it is still running
         countdownJob?.cancel()
 
         if (hour == -1 || minute == -1 || second == -1) {
             println("Time not set")
+            val calendar = Calendar.getInstance().apply {
+                add(Calendar.MINUTE, 1)
+            }
+
+            hour = calendar.get(Calendar.HOUR_OF_DAY)
+            minute = calendar.get(Calendar.MINUTE)
+            second = calendar.get(Calendar.SECOND)
             return
         }
 

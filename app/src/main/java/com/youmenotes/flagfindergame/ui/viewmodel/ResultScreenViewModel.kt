@@ -43,18 +43,9 @@ class ResultScreenViewModel @Inject constructor(
         _score.value = calculatedScore
     }
 
-    fun clearScheduledTime() {
+    fun clearPreferences() {
         sharedPreferences.edit()
-            .remove("scheduled_hour")
-            .remove("scheduled_minute")
-            .remove("scheduled_second")
-            .apply()
-    }
-
-    fun clearScore() {
-        sharedPreferences.edit()
-            .remove("question_count")
-            .remove("answer_count")
+            .clear()
             .apply()
     }
 }

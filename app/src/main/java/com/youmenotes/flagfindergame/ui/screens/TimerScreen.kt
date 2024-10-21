@@ -8,9 +8,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -26,16 +26,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.youmenotes.flagfindergame.R
 import com.youmenotes.flagfindergame.ui.viewmodel.TimerScreenViewModel
+import com.youmenotes.flagfindergame.ui.widgets.MyButton
+import com.youmenotes.flagfindergame.utils.QUIZ_START_COUNT_DOWN_TIME
 
 @Composable
 fun TimerScreen(
     onStartQuiz: (startedBefore: Int) -> Unit,
     viewModel: TimerScreenViewModel = viewModel()
 ) {
-    // Observe the remaining time and challenge start state
     val remainingTime by viewModel.remainingTime.collectAsState()
     val isChallengeStarted by viewModel.isChallengeStarted.collectAsState()
 
@@ -47,12 +50,6 @@ fun TimerScreen(
     val minutes = (0..59).toList()
     val seconds = (0..59).toList()
 
-//    LaunchedEffect(Unit) {
-//        if (resetFlag) {
-//            viewModel.resetScheduledTime()
-//        }
-//    }
-
     LaunchedEffect(isChallengeStarted) {
         if (isChallengeStarted) {
             println("Starting Quiz")
@@ -61,7 +58,6 @@ fun TimerScreen(
         }
     }
 
-    // UI Layout
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -71,8 +67,8 @@ fun TimerScreen(
     ) {
         // Title
         Text(
-            text = "Set Challenge Time",
-            style = MaterialTheme.typography.headlineSmall,
+            text = stringResource(R.string.set_challenge_time),
+            style = MaterialTheme.typography.headlineLarge,
             modifier = Modifier.padding(bottom = 24.dp)
         )
 
@@ -82,14 +78,18 @@ fun TimerScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Hour Picker
-            TimeDropdownMenu(label = "Hour", items = hours, selectedItem = hour) { selectedHour ->
+            TimeDropdownMenu(
+                label = stringResource(id = R.string.hour),
+                items = hours,
+                selectedItem = hour
+            ) { selectedHour ->
                 hour = selectedHour
             }
             Spacer(modifier = Modifier.width(8.dp))
 
             // Minute Picker
             TimeDropdownMenu(
-                label = "Minute",
+                label = stringResource(id = R.string.minute),
                 items = minutes,
                 selectedItem = minute
             ) { selectedMinute ->
@@ -99,7 +99,7 @@ fun TimerScreen(
 
             // Second Picker
             TimeDropdownMenu(
-                label = "Second",
+                label = stringResource(id = R.string.second),
                 items = seconds,
                 selectedItem = second
             ) { selectedSecond ->
@@ -107,26 +107,32 @@ fun TimerScreen(
             }
         }
 
-        // Save Button
-        Button(
-            onClick = {
-                viewModel.setTime(hour, minute, second)
-                viewModel.saveScheduledTime()
-                viewModel.startCountdown()
-            },
-            modifier = Modifier.padding(top = 16.dp)
-        ) {
-            Text(text = "Save Time")
+        Spacer(modifier = Modifier.height(32.dp))
+
+        MyButton(stringResource(id = R.string.save_time)) {
+            viewModel.setTime(hour, minute, second)
+            viewModel.saveScheduledTime()
+            viewModel.startCountdown()
         }
 
         // Challenge Starting in 20 seconds Notification
-        if (remainingTime in 1..20) {
-            Text(
-                text = "CHALLENGE WILL START IN 00:${String.format("%02d", remainingTime)}",
-                color = Color.Red,
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(top = 24.dp)
-            )
+        when {
+            remainingTime in 1..QUIZ_START_COUNT_DOWN_TIME -> {
+                Text(
+                    text = stringResource(id = R.string.challenge_will_start, remainingTime),
+                    color = Color.Red,
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.padding(top = 24.dp)
+                )
+            }
+
+            remainingTime > QUIZ_START_COUNT_DOWN_TIME -> {
+                Text(
+                    text = stringResource(id = R.string.challenge_scheduled, hour, minute, second),
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.padding(top = 24.dp)
+                )
+            }
         }
     }
 }
@@ -140,13 +146,13 @@ fun TimeDropdownMenu(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Column {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = label)
         Box(
             modifier = Modifier
                 .clickable { expanded = true }
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-                .padding(8.dp)
+                .padding(32.dp)
         ) {
             Text(text = selectedItem.toString(), style = MaterialTheme.typography.bodyMedium)
         }

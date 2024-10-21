@@ -9,14 +9,13 @@ import com.youmenotes.flagfindergame.ui.screens.QuizScreen
 import com.youmenotes.flagfindergame.ui.screens.ResultScreen
 import com.youmenotes.flagfindergame.ui.screens.TimerScreen
 
-// Define your routes for navigation
 sealed class Screen(val route: String) {
-    object Timer : Screen("timer_screen")
-    object Quiz : Screen("quiz_screen/{countdownTime}") {
+    data object Timer : Screen("timer_screen")
+    data object Quiz : Screen("quiz_screen/{countdownTime}") {
         fun createRoute(countdownTime: Int) = "quiz_screen/$countdownTime"
     }
 
-    object Result : Screen("result_screen")
+    data object Result : Screen("result_screen")
 }
 
 @Composable
@@ -24,7 +23,6 @@ fun AppNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
-    // Navigation graph for your screens
     NavHost(
         navController = navController,
         startDestination = Screen.Timer.route,
@@ -62,7 +60,7 @@ fun AppNavHost(
             ResultScreen(
                 onRestart = {
                     // Navigate back to the timer screen to restart the game
-                    navController.navigate(Screen.Timer) {
+                    navController.navigate(Screen.Timer.route) {
                         popUpTo(Screen.Timer.route) {
                             inclusive = true
                         }

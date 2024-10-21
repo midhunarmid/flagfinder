@@ -12,7 +12,6 @@ object AppModule {
 
     @Provides
     fun provideQuizRepository(): RetrofitInstance {
-        // Return an instance of QuizRepository (or a mock for testing)
         return RetrofitInstance
     }
 }
