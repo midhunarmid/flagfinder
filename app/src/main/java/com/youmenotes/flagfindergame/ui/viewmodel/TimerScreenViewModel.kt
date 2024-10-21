@@ -59,11 +59,16 @@ class TimerScreenViewModel @Inject constructor(
         loadScheduledTime()
     }
 
+    fun resetScheduledTime() {
+        setTime(-1, -1, -1)
+        saveScheduledTime()
+    }
+
     // Load scheduled time from SharedPreferences
     fun loadScheduledTime() {
-        hour = sharedPreferences.getInt("scheduled_hour", 0)
-        minute = sharedPreferences.getInt("scheduled_minute", 0)
-        second = sharedPreferences.getInt("scheduled_second", 0)
+        hour = sharedPreferences.getInt("scheduled_hour", -1)
+        minute = sharedPreferences.getInt("scheduled_minute", -1)
+        second = sharedPreferences.getInt("scheduled_second", -1)
         println("Saved time is ${hour}:${minute}:${second}")
         startCountdown()
     }
@@ -72,6 +77,12 @@ class TimerScreenViewModel @Inject constructor(
     fun startCountdown() {
         // Cancel the previous countdown if it is still running
         countdownJob?.cancel()
+
+        if (hour == -1 || minute == -1 || second == -1) {
+            println("Time not set")
+            return
+        }
+
         // Start a new countdown
         countdownJob = viewModelScope.launch {
             calculateRemainingTime()

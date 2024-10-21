@@ -12,7 +12,9 @@ import com.youmenotes.flagfindergame.ui.viewmodel.QuizScreenViewModel
 
 // Define your routes for navigation
 sealed class Screen(val route: String) {
-    object Timer : Screen("timer_screen")
+    object Timer : Screen("timer_screen/{resetFlag}") {
+        fun createRoute(resetFlag: Boolean) = "timer_screen/$resetFlag"
+    }
     object Quiz : Screen("quiz_screen/{countdownTime}") {
         fun createRoute(countdownTime: Int) = "quiz_screen/$countdownTime"
     }
@@ -23,7 +25,6 @@ sealed class Screen(val route: String) {
 @Composable
 fun AppNavHost(
     navController: NavHostController,
-    quizViewModel: QuizScreenViewModel,
     modifier: Modifier = Modifier
 ) {
     // Navigation graph for your screens
@@ -33,8 +34,12 @@ fun AppNavHost(
         modifier = modifier
     ) {
         // Timer screen composable
-        composable(Screen.Timer.route) {
+        composable(Screen.Timer.route) { navBackStackEntry ->
+            val resetFlag =
+                navBackStackEntry.arguments?.getString("resetFlag")?.toBoolean() ?: false
+
             TimerScreen(
+                resetFlag = resetFlag,
                 onStartQuiz = { startedBefore ->
                     // Navigate to quiz screen with countdown time as an argument
                     navController.navigate(Screen.Quiz.createRoute(startedBefore))
@@ -48,7 +53,6 @@ fun AppNavHost(
                 navBackStackEntry.arguments?.getString("countdownTime")?.toIntOrNull() ?: 0
 
             QuizScreen(
-                quizViewModel = quizViewModel,
                 startedBefore = startedBefore,
                 onQuizComplete = {
                     // Navigate to result screen when quiz ends
@@ -63,10 +67,9 @@ fun AppNavHost(
         // Result screen composable
         composable(Screen.Result.route) {
             ResultScreen(
-                quizViewModel = quizViewModel,
                 onRestart = {
                     // Navigate back to the timer screen to restart the game
-                    navController.navigate(Screen.Timer.route) {
+                    navController.navigate(Screen.Timer.createRoute(true)) {
                         popUpTo(Screen.Timer.route) {
                             inclusive = true
                         }

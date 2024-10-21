@@ -33,6 +33,7 @@ import com.youmenotes.flagfindergame.ui.viewmodel.TimerScreenViewModel
 @Composable
 fun TimerScreen(
     onStartQuiz: (startedBefore: Int) -> Unit,
+    resetFlag: Boolean = false,
     viewModel: TimerScreenViewModel = viewModel()
 ) {
     // Observe the remaining time and challenge start state
@@ -47,12 +48,16 @@ fun TimerScreen(
     val minutes = (0..59).toList()
     val seconds = (0..59).toList()
 
+//    LaunchedEffect(Unit) {
+//        if (resetFlag) {
+//            viewModel.resetScheduledTime()
+//        }
+//    }
 
-    // Use LaunchedEffect to react to changes in isChallengeStarted
     LaunchedEffect(isChallengeStarted) {
         if (isChallengeStarted) {
             println("Starting Quiz")
-            onStartQuiz(remainingTime)  // Call onStartQuiz only once when challenge starts
+            onStartQuiz(remainingTime)
             viewModel.resetTimer()
         }
     }

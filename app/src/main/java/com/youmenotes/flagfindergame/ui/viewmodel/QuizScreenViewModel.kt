@@ -1,18 +1,30 @@
 package com.youmenotes.flagfindergame.ui.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import android.content.Context
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.youmenotes.flagfindergame.data.model.Question
 import com.youmenotes.flagfindergame.data.repository.RetrofitInstance
+import com.youmenotes.flagfindergame.utils.MAX_QUESTION_COUNT
 import com.youmenotes.flagfindergame.utils.QUESTION_COOL_DOWN_TIME
 import com.youmenotes.flagfindergame.utils.QUESTION_COUNT_DOWN_TIME
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+import kotlin.math.min
 
-class QuizScreenViewModel : ViewModel() {
+@HiltViewModel
+class QuizScreenViewModel @Inject constructor(
+    application: Application
+) : AndroidViewModel(application) {
+
+    private val sharedPreferences =
+        application.getSharedPreferences("TimerPrefs", Context.MODE_PRIVATE)
 
     private val _quizData = mutableListOf<Question>()
 
@@ -29,11 +41,11 @@ class QuizScreenViewModel : ViewModel() {
     private val _errorMessage = MutableStateFlow("")
     val errorMessage = _errorMessage.asStateFlow()
 
-    private val _score = MutableStateFlow(0)
-    val score = _score.asStateFlow()
-
     private val _isQuizFinished = MutableStateFlow(false)
     val isQuizFinished = _isQuizFinished.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading = _isLoading.asStateFlow()
 
     private val _correctAnswerId = MutableStateFlow<Int?>(null)
     val correctAnswerId = _correctAnswerId.asStateFlow()
@@ -41,14 +53,14 @@ class QuizScreenViewModel : ViewModel() {
     private val _selectedAnswerId = MutableStateFlow<Int?>(null)
     val selectedAnswerId = _selectedAnswerId.asStateFlow()
 
-    private val _remainingTime = MutableStateFlow(30)
+    private val _remainingTime = MutableStateFlow(QUESTION_COUNT_DOWN_TIME)
     val remainingTime = _remainingTime.asStateFlow()
 
-    private val _coolDownTime = MutableStateFlow(30)
+    private val _coolDownTime = MutableStateFlow(QUESTION_COOL_DOWN_TIME)
     val coolDownTime = _coolDownTime.asStateFlow()
 
     private var countdownJob: Job? = null
-
+    private var cooldownJob: Job? = null
 
     init {
         loadQuiz()
@@ -56,20 +68,23 @@ class QuizScreenViewModel : ViewModel() {
 
     private fun loadQuiz() {
         viewModelScope.launch {
+            _isLoading.value = true
             val result = RetrofitInstance.fetchQuestions()
             when (result.isSuccess) {
                 true -> {
                     _quizData.addAll(result.getOrDefault(emptyList()))
-                    _totalQuestions.value = _quizData.size
+                    _totalQuestions.value = min(MAX_QUESTION_COUNT, _quizData.size)
                     if (_quizData.size == 0) {
+                        _isLoading.value = false
                         _errorMessage.value = "No questions found"
                         return@launch
                     }
-                    _currentQuestionIndex.value = 0
+                    _isLoading.value = false
                     showNextQuestion()
                 }
 
                 false -> {
+                    _isLoading.value = false
                     _errorMessage.value = result.exceptionOrNull()?.message ?: "Unknown error"
                 }
             }
@@ -77,19 +92,29 @@ class QuizScreenViewModel : ViewModel() {
     }
 
     private fun showNextQuestion() {
-        if (_currentQuestionIndex.value < _quizData.size) {
+        if (_currentQuestionIndex.value < _totalQuestions.value) {
             _currentQuestion.value = _quizData[currentQuestionIndex.value]
             startQuestionTimer()
         } else {
-            // Quiz is complete, handle completion
+            saveTotalQuestionCount()
+            _isQuizFinished.value = true
         }
     }
 
-    private fun startQuestionTimer(countDownTime: Int = QUESTION_COUNT_DOWN_TIME, coolDownTime: Int = QUESTION_COOL_DOWN_TIME) {
-        _remainingTime.value = countDownTime
-        _coolDownTime.value = coolDownTime
+    fun finishQuiz() {
+        saveTotalQuestionCount()
+        _isQuizFinished.value = true
+    }
 
+    fun saveTotalQuestionCount() {
+        sharedPreferences.edit()
+            .putInt("question_count", _totalQuestions.value)
+            .apply()
+    }
+
+    private fun startQuestionTimer() {
         countdownJob?.cancel()
+        cooldownJob?.cancel()
         countdownJob = viewModelScope.launch {
             for (i in _remainingTime.value downTo 0) {
                 _remainingTime.value = i
@@ -104,29 +129,44 @@ class QuizScreenViewModel : ViewModel() {
         if (currentQuestion != null) {
             _correctAnswerId.value = currentQuestion.answerId
             _selectedAnswerId.value = selectedAnswerId
+            val score = if (selectedAnswerId == currentQuestion.answerId) 1 else 0
+            sharedPreferences.edit()
+                .putInt("Q-${_currentQuestionIndex.value}", score)
+                .apply()
         }
     }
 
     fun checkAnswer() {
         _remainingTime.value = 0
-        _coolDownTime.value = QUESTION_COOL_DOWN_TIME
-
+        _selectedAnswerId.value = sharedPreferences.getInt("$_currentQuestionIndex", -1)
         countdownJob?.cancel()
-        viewModelScope.launch {
+        cooldownJob?.cancel()
+        cooldownJob = viewModelScope.launch {
             for (i in _coolDownTime.value downTo 0) {
                 _coolDownTime.value = i
                 delay(1000)
             }
             _currentQuestionIndex.value++
+            resetCountdownTimers()
             showNextQuestion()
         }
     }
 
-    fun updateQuestion(startedBefore: Int) {
-        _currentQuestionIndex.value = -startedBefore / (QUESTION_COUNT_DOWN_TIME + QUESTION_COOL_DOWN_TIME)
-        showNextQuestion()
+    private fun resetCountdownTimers() {
+        _remainingTime.value = QUESTION_COUNT_DOWN_TIME
+        _coolDownTime.value = QUESTION_COOL_DOWN_TIME
+        _selectedAnswerId.value = -1
+    }
 
-        val remainingCountDownTime = -startedBefore % (QUESTION_COUNT_DOWN_TIME + QUESTION_COOL_DOWN_TIME)
-        startQuestionTimer(countDownTime = remainingCountDownTime)
+    fun updateQuestion(startedBefore: Int) {
+        val timeForOneQuestion = QUESTION_COUNT_DOWN_TIME + QUESTION_COOL_DOWN_TIME
+        _currentQuestionIndex.value = -startedBefore / timeForOneQuestion
+        val remainingCountDownTime = timeForOneQuestion - (-startedBefore % timeForOneQuestion)
+        _remainingTime.value = remainingCountDownTime - QUESTION_COOL_DOWN_TIME
+        _coolDownTime.value = min(remainingCountDownTime, QUESTION_COOL_DOWN_TIME)
+        if (!_isLoading.value) {
+            showNextQuestion()
+        }
+
     }
 }

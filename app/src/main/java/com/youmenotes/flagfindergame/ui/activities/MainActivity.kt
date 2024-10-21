@@ -25,10 +25,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val quizViewModel = QuizScreenViewModel()
             FlagFinderGameTheme {
                 val navController = rememberNavController()
-                QuizApp(navController = navController, quizViewModel = quizViewModel)
+                QuizApp(navController = navController)
             }
         }
     }
@@ -36,7 +35,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun QuizApp(navController: NavHostController, quizViewModel: QuizScreenViewModel) {
+fun QuizApp(navController: NavHostController) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -46,7 +45,6 @@ fun QuizApp(navController: NavHostController, quizViewModel: QuizScreenViewModel
         content = { innerPadding ->
             AppNavHost(
                 navController = navController,
-                quizViewModel = quizViewModel,
                 modifier = Modifier.padding(innerPadding)
             )
         }
